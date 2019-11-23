@@ -5,7 +5,7 @@ import picamera
 from picam3 import motion
 
 motion_state = False
-pic_path = "images/"
+pic_path = "images"
 
 
 def get_time():
