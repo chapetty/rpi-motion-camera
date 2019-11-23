@@ -5,7 +5,7 @@ import picamera
 from picam3 import motion
 
 motion_state = False
-pic_path = "images"
+pic_path = "/home/pi/rpi-motion-camera/images"
 
 
 def get_time():
@@ -24,7 +24,7 @@ def capture_image(current_time, pic_path):
 
 while True:
     # Check if path directory exists, if not create it
-    if os.path.isdir(pic_path):
+    if not os.path.isdir(pic_path):
         os.mkdir(pic_path)
         print(f"Created directory {pic_path}")
 
