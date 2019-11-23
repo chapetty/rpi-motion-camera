@@ -106,64 +106,69 @@ def getFreeSpace():
     return du
 
 
-# Get first image
-image1, buffer1 = captureTestImage(cameraSettings, testWidth, testHeight)
 
-# Reset last capture time
-lastCapture = time.time()
+def motion():
+    # Get first image
+    image1, buffer1 = captureTestImage(cameraSettings, testWidth, testHeight)
 
-while True:
+    # Reset last capture time
+    lastCapture = time.time()
 
-    # Get comparison image
-    image2, buffer2 = captureTestImage(cameraSettings, testWidth, testHeight)
+    while True:
 
-    # Count changed pixels
-    changedPixels = 0
-    takePicture = False
+        # Get comparison image
+        image2, buffer2 = captureTestImage(cameraSettings, testWidth, testHeight)
 
-    if debugMode: # in debug mode, save a bitmap-file with marked changed pixels and with visible testarea-borders
-        debugimage = Image.new("RGB",(testWidth, testHeight))
-        debugim = debugimage.load()
+        # Count changed pixels
+        changedPixels = 0
+        takePicture = False
 
-    for z in range(0, testAreaCount): # = xrange(0,1) with default-values = z will only have the value of 0 = only one scan-area = whole picture
-        for x in range(testBorders[z][0][0]-1, testBorders[z][0][1]): # = xrange(0,100) with default-values
-            for y in range(testBorders[z][1][0]-1, testBorders[z][1][1]):   # = xrange(0,75) with default-values; testBorders are NOT zero-based, buffer1[x,y] are zero-based (0,0 is top left of image, testWidth-1,testHeight-1 is botton right)
-                if debugMode:
-                    debugim[x,y] = buffer2[x,y]
-                    if ((x == testBorders[z][0][0]-1) or (x == testBorders[z][0][1]-1) or (y == testBorders[z][1][0]-1) or (y == testBorders[z][1][1]-1)):
-                        # print "Border %s %s" % (x,y)
-                        debugim[x,y] = (0, 0, 255) # in debug mode, mark all border pixel to blue
-                # Just check green channel as it's the highest quality channel
-                pixdiff = abs(buffer1[x,y][1] - buffer2[x,y][1])
-                if pixdiff > threshold:
-                    changedPixels += 1
+        if debugMode: # in debug mode, save a bitmap-file with marked changed pixels and with visible testarea-borders
+            debugimage = Image.new("RGB",(testWidth, testHeight))
+            debugim = debugimage.load()
+
+        for z in range(0, testAreaCount): # = xrange(0,1) with default-values = z will only have the value of 0 = only one scan-area = whole picture
+            for x in range(testBorders[z][0][0]-1, testBorders[z][0][1]): # = xrange(0,100) with default-values
+                for y in range(testBorders[z][1][0]-1, testBorders[z][1][1]):   # = xrange(0,75) with default-values; testBorders are NOT zero-based, buffer1[x,y] are zero-based (0,0 is top left of image, testWidth-1,testHeight-1 is botton right)
                     if debugMode:
-                        debugim[x,y] = (0, 255, 0)  # in debug mode, mark all changed pixel to green
-                # Save an image if pixels changed
-                if changedPixels > sensitivity:
-                    takePicture = True  # will shoot the photo later
+                        debugim[x,y] = buffer2[x,y]
+                        if ((x == testBorders[z][0][0]-1) or (x == testBorders[z][0][1]-1) or (y == testBorders[z][1][0]-1) or (y == testBorders[z][1][1]-1)):
+                            # print "Border %s %s" % (x,y)
+                            debugim[x,y] = (0, 0, 255) # in debug mode, mark all border pixel to blue
+                    # Just check green channel as it's the highest quality channel
+                    pixdiff = abs(buffer1[x,y][1] - buffer2[x,y][1])
+                    if pixdiff > threshold:
+                        changedPixels += 1
+                        if debugMode:
+                            debugim[x,y] = (0, 255, 0)  # in debug mode, mark all changed pixel to green
+                    # Save an image if pixels changed
+                    if changedPixels > sensitivity:
+                        takePicture = True  # will shoot the photo later
+                    if not debugMode and changedPixels > sensitivity:
+                        break  # break the y loop
                 if not debugMode and changedPixels > sensitivity:
-                    break  # break the y loop
+                    break  # break the x loop
             if not debugMode and changedPixels > sensitivity:
-                break  # break the x loop
-        if not debugMode and changedPixels > sensitivity:
-            break  # break the z loop
+                break  # break the z loop
 
-    if debugMode:
-        debugimage.save(filepath + "/debug.bmp")    # save debug image as bmp
-        print("debug.bmp saved, %s changed pixel" % changedPixels)
-    # else:
-    #     print "%s changed pixel" % changedPixels
+        if debugMode:
+            debugimage.save(filepath + "/debug.bmp")    # save debug image as bmp
+            print("debug.bmp saved, %s changed pixel" % changedPixels)
+        # else:
+        #     print "%s changed pixel" % changedPixels
 
-    # Check force capture
-    if forceCapture:
-        if time.time() - lastCapture > forceCaptureTime:
-            takePicture = True
+        # Check force capture
+        if forceCapture:
+            if time.time() - lastCapture > forceCaptureTime:
+                takePicture = True
 
-    if takePicture:
-        lastCapture = time.time()
-        saveImage(cameraSettings, saveWidth, saveHeight, saveQuality, diskSpaceToReserve)
+        if takePicture:
+            lastCapture = time.time()
+            return True
+            # saveImage(cameraSettings, saveWidth, saveHeight, saveQuality, diskSpaceToReserve)
+        else:
+            return False
 
-    # Swap comparison buffers
-    image1 = image2
-    buffer1 = buffer2
+        # Swap comparison buffers
+        image1 = image2
+        buffer1 = buffer2
